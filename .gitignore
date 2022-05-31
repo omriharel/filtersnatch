@@ -1,0 +1,9 @@
+build/bin
+build/windows/installer/wails_tools.nsh
+build/windows/installer/tmp/
+
+node_modules
+frontend/wailsjs
+frontend/dist
+
+.vscode
