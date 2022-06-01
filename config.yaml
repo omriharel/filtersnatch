@@ -1,0 +1,6 @@
+downloads:
+    directory: C:\Users\Omri\Downloads
+    watch_strategy: any_filter_file
+filters:
+    directory: '%USERPROFILE%\Documents\My Games\Path of Exile'
+    overwrite_strategy: selected_file

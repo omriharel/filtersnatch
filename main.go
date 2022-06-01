@@ -17,6 +17,9 @@ func main() {
 	// Create an instance of the app structure
 	app := NewApp()
 
+	// for now
+	// clearConfigDir()
+
 	go func() {
 		systray.Run(func() { onTrayReady(app) }, func() { onTrayQuit(app) })
 	}()
@@ -28,8 +31,11 @@ func main() {
 		Height:            768,
 		Assets:            assets,
 		OnStartup:         app.startup,
+		OnDomReady:        app.domReady,
 		DisableResize:     true,
 		HideWindowOnClose: true,
+		StartHidden:       true,
+		Frameless:         true,
 		Windows: &windows.Options{
 			WindowIsTranslucent:  true,
 			WebviewIsTransparent: true,
