@@ -17,13 +17,13 @@ func main() {
 	app := NewApp()
 
 	// for now
-	clearConfigDir()
+	// clearConfigDir()
 
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:             "instantblade",
 		Width:             1024,
-		Height:            1024,
+		Height:            872,
 		Assets:            assets,
 		OnStartup:         app.startup,
 		OnDomReady:        app.domReady,

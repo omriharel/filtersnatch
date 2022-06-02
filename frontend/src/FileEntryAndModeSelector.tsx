@@ -3,7 +3,10 @@ import isValidFilename from "valid-filename";
 import { RadioGroup } from "@headlessui/react";
 import { main } from "../wailsjs/go/models";
 import { useEffect, useState } from "react";
-import { LogDebug } from "../wailsjs/runtime/runtime";
+
+const trimFilterExt = (filename: string) => {
+  return filename.substring(0, filename.length - ".filter".length);
+};
 
 export interface FileEntryAndModeSelectorProps {
   prompt: string;
@@ -25,9 +28,8 @@ const FileEntryAndModeSelector = (props: FileEntryAndModeSelectorProps) => {
     return props.modes.find((mode) => mode.name === name)!;
   };
 
-  const [selectedMode, setSelectedMode] = useState(
-    getModeByName(props.selectedMode || props.modes[0].name)
-  );
+  const defaultMode = getModeByName(props.selectedMode || props.modes[0].name);
+  const [selectedMode, setSelectedMode] = useState(defaultMode);
 
   const [selectedEntryName, setSelectedEntryName] = useState(
     props.selectedEntryName || ""
@@ -172,10 +174,7 @@ const FileEntryAndModeSelector = (props: FileEntryAndModeSelectorProps) => {
                                 }`}
                               >
                                 <div className="truncate">
-                                  {entry.name.substring(
-                                    0,
-                                    entry.name.length - ".filter".length
-                                  )}
+                                  {trimFilterExt(entry.name)}
                                   <span className="opacity-60">.filter</span>
                                 </div>
                                 <div className="text-sm opacity-80 italic">
@@ -205,10 +204,7 @@ const FileEntryAndModeSelector = (props: FileEntryAndModeSelectorProps) => {
                   Last downloaded
                 </div>
                 <div className="truncate w-full text-center">
-                  {newestEntry.name.substring(
-                    0,
-                    newestEntry.name.length - ".filter".length
-                  )}
+                  {trimFilterExt(newestEntry.name)}
                   <span className="opacity-60">.filter</span>
                 </div>
                 <div className="italic text-lg text-slate-400">
@@ -222,9 +218,9 @@ const FileEntryAndModeSelector = (props: FileEntryAndModeSelectorProps) => {
             <div className="flex flex-1">
               <InputFilterNameBox
                 prompt={selectedMode.textInputPrompt}
-                value={props.inputText}
+                value={inputText}
                 onChange={(newValue: string) =>
-                  setInputText(`${newValue}.filter`)
+                  setInputText(newValue ? `${newValue}.filter` : "")
                 }
               ></InputFilterNameBox>
             </div>
@@ -252,17 +248,22 @@ const CheckIcon = (props: any) => {
 
 const InputFilterNameBox = (props: any) => {
   type validationState = "unset" | "pending" | "valid" | "invalid";
-  const [inputText, setInputText] = useState(props.value || "");
+  const [inputText, setInputText] = useState<string>(
+    props.value ? trimFilterExt(props.value) : ""
+  );
   const [validState, setValidState] = useState<validationState>("unset");
 
-  const validate = () => {
-    if (isValidFilename(inputText.trim())) {
-      setValidState("valid");
+  const validate = (initial: boolean) => {
+    if (inputText.trim() === "") {
+      setValidState("unset");
+      if (!initial) {
+        props.onChange("");
+      }
       return;
     }
 
-    if (inputText.trim() === "") {
-      setValidState("unset");
+    if (isValidFilename(inputText.trim())) {
+      setValidState("valid");
       return;
     }
 
@@ -274,7 +275,7 @@ const InputFilterNameBox = (props: any) => {
 
     if (event.key === "Enter") {
       event.preventDefault();
-      validate();
+      validate(false);
     }
   };
 
@@ -283,6 +284,8 @@ const InputFilterNameBox = (props: any) => {
       props.onChange(inputText.trim());
     }
   }, [validState]);
+
+  useEffect(() => validate(true), []);
 
   return (
     <GenericCenterMessage>
@@ -294,7 +297,7 @@ const InputFilterNameBox = (props: any) => {
             className="w-96 mr-16 pl-4 py-2 shadow-md focus:outline-none text-right text-slate-200 bg-transparent "
             onChange={(event) => setInputText(event.currentTarget.value)}
             onKeyDown={onKeyDown}
-            onBlur={() => validate()}
+            onBlur={() => validate(false)}
           ></input>
           <span className="absolute right-4 text-slate-400">.filter</span>
           <span

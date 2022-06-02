@@ -31,15 +31,15 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	go func() {
-		systray.Run(func() { onTrayReady(a) }, func() { onTrayQuit(a) })
-	}()
-
 	var err error
 	a.config, err = NewConfig(a.ctx)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Failed to load config: %w", err)
 	}
+
+	go func() {
+		systray.Run(func() { onTrayReady(a) }, func() { onTrayQuit(a) })
+	}()
 }
 
 // domReady is called when the DOM is ready
@@ -49,17 +49,17 @@ func (a *App) domReady(ctx context.Context) {
 	}
 }
 
-// ChooseDirFromConfigAndUpdateConfig allows the user to choose a directory for a given purpose.
+// chooseDirFromConfigAndUpdateConfig allows the user to choose a directory for a given purpose.
 // The default directory is attempted to be read from the config using the given config key.
 // If the user successfully chooses a directory, the config key is updated with the new directory.
 // Returns the path of the chosen directory, or the empty string if one wasn't chosen
-func (a *App) ChooseDirFromConfigAndUpdateConfig(configKey string, title string) string {
+func (a *App) chooseDirFromConfigAndUpdateConfig(configKey string, title string) string {
 	options := runtime.OpenDialogOptions{
 		Title:                title,
 		CanCreateDirectories: false,
 	}
 	defaultDirectory := a.config.GetString(configKey)
-	expandedDefaultDirectory := os.ExpandEnv(a.config.GetString(configKey))
+	expandedDefaultDirectory := os.ExpandEnv(defaultDirectory)
 	runtime.LogDebugf(a.ctx, "Expanded %s into %s (key: %s)", defaultDirectory, expandedDefaultDirectory, configKey)
 
 	if dirExists(expandedDefaultDirectory) {
@@ -81,12 +81,67 @@ func (a *App) ChooseDirFromConfigAndUpdateConfig(configKey string, title string)
 	return chosenPath
 }
 
+// exported stuff from here on out
+
+func (a *App) GetStartInTrayFromConfig() bool {
+	return a.config.GetBool(configKeyWindowStartInTray)
+}
+
+func (a *App) SetStartInTrayAndUpdateConfig(startInTray bool) {
+	a.config.Set(configKeyWindowStartInTray, startInTray)
+	if err := a.config.WriteConfig(); err != nil {
+		runtime.LogErrorf(a.ctx, "Failed to update config: %w", err)
+	}
+}
+
+func (a *App) SetFiltersStrategyAndUpdateConfig(strategy string, fileName string) {
+	a.config.Set(configKeyFiltersOverwriteStrategy, strategy)
+	a.config.Set(configKeyFiltersSelectedFile, fileName)
+
+	if err := a.config.WriteConfig(); err != nil {
+		runtime.LogErrorf(a.ctx, "Failed to update config: %w", err)
+	}
+}
+
+func (a *App) SetDownloadsStrategyAndUpdateConfig(strategy string, fileName string) {
+	a.config.Set(configKeyDownloadsWatchStrategy, strategy)
+	a.config.Set(configKeyDownloadsNamedFile, fileName)
+
+	if err := a.config.WriteConfig(); err != nil {
+		runtime.LogErrorf(a.ctx, "Failed to update config: %w", err)
+	}
+}
+
+type ConfigJSON struct {
+	FiltersDirectory         string `json:"filters_directory"`
+	FiltersOverwriteStrategy string `json:"filters_overwrite_strategy"`
+	FiltersSelectedFile      string `json:"filters_selected_file"`
+
+	DownloadsDirectory     string `json:"downloads_directory"`
+	DownloadsWatchStrategy string `json:"downloads_watch_strategy"`
+	DownloadsNamedFile     string `json:"downloads_named_file"`
+
+	StartInTray bool `json:"start_in_tray"`
+}
+
+func (a *App) GetConfigJSON() ConfigJSON {
+	return ConfigJSON{
+		FiltersDirectory:         a.config.GetString(configKeyFiltersDirectory),
+		FiltersOverwriteStrategy: a.config.GetString(configKeyFiltersOverwriteStrategy),
+		FiltersSelectedFile:      a.config.GetString(configKeyFiltersSelectedFile),
+		DownloadsDirectory:       a.config.GetString(configKeyDownloadsDirectory),
+		DownloadsWatchStrategy:   a.config.GetString(configKeyDownloadsWatchStrategy),
+		DownloadsNamedFile:       a.config.GetString(configKeyDownloadsNamedFile),
+		StartInTray:              a.config.GetBool(configKeyWindowStartInTray),
+	}
+}
+
 func (a *App) ChooseFiltersDir() string {
-	return a.ChooseDirFromConfigAndUpdateConfig(configKeyFiltersDirectory, "Choose Path of Exile filter directory")
+	return a.chooseDirFromConfigAndUpdateConfig(configKeyFiltersDirectory, "Choose Path of Exile filter directory")
 }
 
 func (a *App) ChooseDownloadsDir() string {
-	return a.ChooseDirFromConfigAndUpdateConfig(configKeyDownloadsDirectory, "Choose downloads directory to watch")
+	return a.chooseDirFromConfigAndUpdateConfig(configKeyDownloadsDirectory, "Choose downloads directory to watch")
 }
 
 type FileListEntry struct {
@@ -95,11 +150,14 @@ type FileListEntry struct {
 }
 
 func (a *App) ListFiltersInDir(dir string) ([]FileListEntry, error) {
-	if !dirExists(dir) {
+	expandedDir := os.ExpandEnv(dir)
+	runtime.LogDebugf(a.ctx, "Expanded %s into %s", dir, expandedDir)
+
+	if !dirExists(expandedDir) {
 		return nil, fmt.Errorf("directory %s does not exist", dir)
 	}
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := ioutil.ReadDir(expandedDir)
 	if err != nil {
 		return nil, err
 	}

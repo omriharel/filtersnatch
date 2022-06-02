@@ -4,6 +4,10 @@ import {
   ChooseFiltersDir,
   ChooseDownloadsDir,
   ListFiltersInDir,
+  GetConfigJSON,
+  SetStartInTrayAndUpdateConfig,
+  SetDownloadsStrategyAndUpdateConfig,
+  SetFiltersStrategyAndUpdateConfig,
 } from "../wailsjs/go/main/App";
 import { main } from "../wailsjs/go/models";
 import {
@@ -17,12 +21,24 @@ import FileEntryAndModeSelector from "./FileEntryAndModeSelector";
 
 const App = () => {
   const [chosenFiltersDir, setChosenFiltersDir] = useState("");
+  const [chosenFilterOverwriteStrategy, setChosenFilterOverwriteStrategy] =
+    useState("");
+  const [chosenFilterFile, setChosenFilterFile] = useState("");
+
   const [chosenDownloadsDir, setChosenDownloadsDir] = useState("");
+  const [chosenDownloadsWatchedFile, setChosenDownloadsWatchedFile] =
+    useState("");
+  const [chosenDownloadsWatchStrategy, setChosenDownloadsWatchStrategy] =
+    useState("");
+
+  const [startInTray, setStartInTray] = useState(false);
 
   const [filtersInFiltersDir, setFiltersInFiltersDir] =
     useState<main.FileListEntry[]>();
   const [filtersInDownloadsDir, setFiltersInDownloadsDir] =
     useState<main.FileListEntry[]>();
+
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   const refreshFiltersInFiltersDir = () => {
     ListFiltersInDir(chosenFiltersDir).then((filters) => {
@@ -37,8 +53,24 @@ const App = () => {
   };
 
   useEffect(() => {
-    EventsOn("watchEventTriggered", refreshFiltersInFiltersDir);
-    EventsOn("filterFileReplaced", refreshFiltersInDownloadsDir);
+    GetConfigJSON().then((config) => {
+      setChosenFiltersDir(config.filters_directory);
+      setChosenFilterOverwriteStrategy(config.filters_overwrite_strategy);
+      setChosenFilterFile(config.filters_selected_file);
+
+      setChosenDownloadsDir(config.downloads_directory);
+      setChosenDownloadsWatchStrategy(config.downloads_watch_strategy);
+      setChosenDownloadsWatchedFile(config.downloads_named_file);
+
+      setStartInTray(config.start_in_tray);
+
+      setConfigLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    EventsOn("watchEventTriggered", refreshFiltersInDownloadsDir);
+    EventsOn("filterFileReplaced", refreshFiltersInFiltersDir);
     return () => {
       EventsOff("watchEventTriggered");
       EventsOff("filterFileReplaced");
@@ -75,7 +107,7 @@ const App = () => {
           </div>
           <div className="flex-1"></div>
           <div className="flex items-center gap-8">
-            <PreferencesPanel />
+            <PreferencesPanel startInTrayInitialValue={startInTray} />
           </div>
           <div className="flex-1"></div>
           <div
@@ -121,29 +153,52 @@ const App = () => {
           </div>
 
           <div className="col-span-2 row-start-2 col-start-1">
-            <FileEntryAndModeSelector
-              prompt={"Filter file to be replaced:"}
-              entries={filtersInFiltersDir}
-              modes={[
-                {
-                  name: "selected_file",
-                  render: "Select existing file",
-                  onChosen: ({ entryName }) => {
-                    LogDebug("Selected filter file to overwrite: " + entryName);
+            {configLoaded && (
+              <FileEntryAndModeSelector
+                prompt={"Filter file to be replaced:"}
+                entries={filtersInFiltersDir}
+                modes={[
+                  {
+                    name: "selected_file",
+                    render: "Select existing file",
+                    onChosen: ({ entryName }) => {
+                      LogDebug(
+                        "Selected filter file to overwrite: " + entryName
+                      );
+                      SetFiltersStrategyAndUpdateConfig(
+                        "selected_file",
+                        entryName || ""
+                      );
+                    },
+                    inputMode: "entries",
                   },
-                  inputMode: "entries",
-                },
-                {
-                  name: "named_file",
-                  render: "Specify exact file name",
-                  onChosen: ({ text }) => {
-                    LogDebug("Selected exact file to overwrite: " + text);
+                  {
+                    name: "named_file",
+                    render: "Specify exact file name",
+                    onChosen: ({ text }) => {
+                      LogDebug("Selected exact file to overwrite: " + text);
+                      SetFiltersStrategyAndUpdateConfig(
+                        "named_file",
+                        text || ""
+                      );
+                    },
+                    inputMode: "text",
+                    textInputPrompt: "(Over)write only this filter file:",
                   },
-                  inputMode: "text",
-                  textInputPrompt: "(Over)write only this filter file:",
-                },
-              ]}
-            />
+                ]}
+                selectedMode={chosenFilterOverwriteStrategy}
+                selectedEntryName={
+                  chosenFilterOverwriteStrategy === "selected_file"
+                    ? chosenFilterFile
+                    : undefined
+                }
+                inputText={
+                  chosenFilterOverwriteStrategy === "named_file"
+                    ? chosenFilterFile
+                    : undefined
+                }
+              />
+            )}
           </div>
 
           <div className="col-span-2 row-start-3 col-start-1 text-center text-7xl opacity-20 font-extrabold">
@@ -151,39 +206,55 @@ const App = () => {
           </div>
 
           <div className="col-span-2 row-start-5 col-start-1">
-            <FileEntryAndModeSelector
-              prompt={"When a new filter is downloaded:"}
-              entries={filtersInDownloadsDir}
-              modes={[
-                {
-                  name: "newest_filter_file",
-                  render: () => (
-                    <>
-                      Use newest{" "}
-                      <span className="font-mono text-base text-slate-200">
-                        *.filter
-                      </span>{" "}
-                      file
-                    </>
-                  ),
-                  inputMode: "singleEntry",
-                  onChosen: ({ entryName }) => {
-                    LogDebug(
-                      "Selected to take newest filter file: " + entryName
-                    );
+            {configLoaded && (
+              <FileEntryAndModeSelector
+                prompt={"When a new filter is downloaded:"}
+                entries={filtersInDownloadsDir}
+                modes={[
+                  {
+                    name: "newest_filter_file",
+                    render: () => (
+                      <>
+                        Use newest{" "}
+                        <span className="font-mono text-base text-slate-200">
+                          *.filter
+                        </span>{" "}
+                        file
+                      </>
+                    ),
+                    inputMode: "singleEntry",
+                    onChosen: ({ entryName }) => {
+                      LogDebug(
+                        "Selected to take newest filter file: " + entryName
+                      );
+                      SetDownloadsStrategyAndUpdateConfig(
+                        "newest_filter_file",
+                        ""
+                      );
+                    },
                   },
-                },
-                {
-                  name: "named_file",
-                  render: "Specify exact file name",
-                  inputMode: "text",
-                  textInputPrompt: "Only take a filter with this exact name:",
-                  onChosen: ({ text }) => {
-                    LogDebug("Selected to take only exact file: " + text);
+                  {
+                    name: "named_file",
+                    render: "Specify exact file name",
+                    inputMode: "text",
+                    textInputPrompt: "Only take a filter with this exact name:",
+                    onChosen: ({ text }) => {
+                      LogDebug("Selected to take only exact file: " + text);
+                      SetDownloadsStrategyAndUpdateConfig(
+                        "named_file",
+                        text || ""
+                      );
+                    },
                   },
-                },
-              ]}
-            ></FileEntryAndModeSelector>
+                ]}
+                selectedMode={chosenDownloadsWatchStrategy}
+                inputText={
+                  chosenDownloadsWatchStrategy === "named_file"
+                    ? chosenDownloadsWatchedFile
+                    : undefined
+                }
+              ></FileEntryAndModeSelector>
+            )}
           </div>
 
           <button
@@ -212,7 +283,7 @@ const App = () => {
   );
 };
 
-const PreferencesPanel = () => {
+const PreferencesPanel = (props: { startInTrayInitialValue: boolean }) => {
   return (
     <Popover className="relative">
       <Popover.Button className="text-slate-500 focus:outline-none flex gap-1 items-center">
@@ -223,9 +294,12 @@ const PreferencesPanel = () => {
       <Popover.Panel className="absolute z-10 mt-4 -translate-x-1/3 h-48 w-64">
         <div className="grid grid-cols-1 p-8 gap-4 rounded-xl bg-opacity-80 backdrop-blur-md shadow-xl bg-slate-700">
           <ToggleSwitch
-            enabled
+            enabled={props.startInTrayInitialValue}
             label="Start in tray"
-            onChange={() => {}}
+            onChange={(newValue) => {
+              LogDebug("Updating start in tray option to: " + newValue);
+              SetStartInTrayAndUpdateConfig(newValue);
+            }}
           ></ToggleSwitch>
         </div>
       </Popover.Panel>
