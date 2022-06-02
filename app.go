@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/djherbis/times"
+	"github.com/getlantern/systray"
 	"github.com/spf13/viper"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -29,6 +30,10 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	go func() {
+		systray.Run(func() { onTrayReady(a) }, func() { onTrayQuit(a) })
+	}()
 
 	var err error
 	a.config, err = NewConfig(a.ctx)
@@ -107,9 +112,14 @@ func (a *App) ListFiltersInDir(dir string) ([]FileListEntry, error) {
 
 		if strings.ToLower(filepath.Ext(file.Name())) == ".filter" {
 			fileTimes := times.Get(file)
+			createdTime := fileTimes.ModTime()
+			if fileTimes.HasBirthTime() && createdTime.Before(fileTimes.BirthTime()) {
+				createdTime = fileTimes.BirthTime()
+			}
+
 			filterFiles = append(filterFiles, FileListEntry{
 				Name:        file.Name(),
-				CreatedTime: fileTimes.AccessTime().Format(time.RFC3339),
+				CreatedTime: createdTime.Format(time.RFC3339),
 			})
 		}
 	}

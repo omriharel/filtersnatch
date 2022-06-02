@@ -11,7 +11,8 @@
     "@headlessui/react": "^1.6.4",
     "@yaireo/relative-time": "^1.0.2",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "valid-filename": "^4.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",

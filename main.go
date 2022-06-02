@@ -3,7 +3,6 @@ package main
 import (
 	"embed"
 
-	"github.com/getlantern/systray"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
@@ -18,17 +17,13 @@ func main() {
 	app := NewApp()
 
 	// for now
-	// clearConfigDir()
-
-	go func() {
-		systray.Run(func() { onTrayReady(app) }, func() { onTrayQuit(app) })
-	}()
+	clearConfigDir()
 
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:             "instantblade",
 		Width:             1024,
-		Height:            768,
+		Height:            1024,
 		Assets:            assets,
 		OnStartup:         app.startup,
 		OnDomReady:        app.domReady,
