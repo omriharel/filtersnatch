@@ -21,10 +21,10 @@ POPD
 
 MKDIR "%FILTERSNATCH_ROOT%\releases\%1" 2> NUL
 MOVE /Y "%FILTERSNATCH_ROOT%\filtersnatch.exe" "%FILTERSNATCH_ROOT%\releases\%1\filtersnatch.exe" >NUL 2>&1
-COPY /Y "%FILTERSNATCH_ROOT%\pkg\FILTERSNATCH\scripts\misc\release-notes.txt" "%FILTERSNATCH_ROOT%\releases\%1\notes.txt" >NUL 2>&1
+COPY /Y "%FILTERSNATCH_ROOT%\scripts\misc\release-notes.txt" "%FILTERSNATCH_ROOT%\releases\%1\notes.txt" >NUL 2>&1
 
 ECHO.
-ECHO Release binaries created in %FILTERSNATCH_ROOT%\releases\%1
+ECHO Release binary created in %FILTERSNATCH_ROOT%\releases\%1
 ECHO Opening release directory and notes for editing.
 ECHO When you're done, run "git push origin %1" and draft the release on GitHub.
 
