@@ -122,19 +122,19 @@ const App = () => {
           </div>
           <div className="flex-1"></div>
           <div
-            className="flex text-5xl text-slate-500 cursor-grab"
+            className="-mt-2 flex self-start text-5xl text-slate-500 cursor-grab"
             data-wails-drag
           >
             ⁙
           </div>
           <div
-            className="flex text-5xl text-slate-500 cursor-pointer"
+            className="-mt-2 flex self-start text-5xl text-slate-500 cursor-pointer"
             onClick={() => WindowMinimise()}
           >
             _
           </div>
           <div
-            className="flex text-5xl text-slate-500 cursor-pointer"
+            className="-mt-2 mr-2 flex self-start text-5xl text-slate-500 cursor-pointer"
             onClick={() => WindowHide()}
           >
             x
@@ -316,8 +316,8 @@ const PreferencesPanel = (props: { startInTrayInitialValue: boolean }) => {
         <div className="text-xl mb-0.5">settings</div>
       </Popover.Button>
 
-      <Popover.Panel className="absolute z-10 mt-4 -translate-x-1/3 h-48 w-64">
-        <div className="grid grid-cols-1 p-8 gap-4 rounded-xl bg-opacity-80 backdrop-blur-md shadow-xl bg-slate-700">
+      <Popover.Panel className="absolute z-10 mt-4 -translate-x-[26%] h-48 w-64">
+        <div className="grid grid-cols-1 place-items-center p-6 gap-4 rounded-xl bg-opacity-80 backdrop-blur-md shadow-xl bg-slate-700">
           <ToggleSwitch
             enabled={props.startInTrayInitialValue}
             label="Start in tray"

@@ -1,0 +1,17 @@
+This release ___________:
+
+- One awesome thing that happened
+- Another awesome thing
+
+**Usage instructions**
+
+- Download the `filtersnatch.exe` executable attached to this release
+- Launch it and follow the prompts on the screen to set up your preferences
+  - After initial setup, you can set it to start from the tray (without the UI window)
+  - If you prefer filtersnatch to run on startup, you can create a shortcut to it in the folder opened by **Start -> Run -> `shell:startup`** (or Win+R)
+
+If you'd like to report a bug or have trouble getting things to work, please [join our Discord](https://discord.gg/MCFFXbUTzR) - we'll be happy to help.
+
+More detailed instructions and documentation are in the [repo's main page](https://github.com/omriharel/filtersnatch).
+
+Enjoy!

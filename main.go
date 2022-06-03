@@ -2,10 +2,18 @@ package main
 
 import (
 	"embed"
+	"fmt"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+)
+
+// build tags will populate this
+var (
+	gitCommit  string
+	versionTag string
+	buildType  string
 )
 
 //go:embed frontend/dist
@@ -16,8 +24,16 @@ func main() {
 	// Create an instance of the app structure
 	app := NewApp()
 
-	// for now
-	// clearConfigDir()
+	// If build tags are available, feed them to the app
+	if buildType != "" && (versionTag != "" || gitCommit != "") {
+		identifier := gitCommit
+		if versionTag != "" {
+			identifier = versionTag
+		}
+
+		versionString := fmt.Sprintf("Version %s-%s", buildType, identifier)
+		app.setVersion(versionString)
+	}
 
 	// Create application with options
 	err := wails.Run(&options.App{

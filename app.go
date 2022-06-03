@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -22,11 +23,17 @@ type App struct {
 	ctx     context.Context
 	config  *viper.Viper
 	watcher *Watcher
+
+	version string
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{}
+}
+
+func (a *App) setVersion(version string) {
+	a.version = version
 }
 
 // startup is called when the app starts. The context is saved
@@ -77,7 +84,7 @@ func (a *App) shutdown(ctx context.Context) {
 // The default directory is attempted to be read from the config using the given config key.
 // If the user successfully chooses a directory, the config key is updated with the new directory.
 // Returns the path of the chosen directory, or the empty string if one wasn't chosen
-func (a *App) chooseDirFromConfigAndUpdateConfig(configKey string, title string) string {
+func (a *App) chooseDirFromConfigAndUpdateConfig(configKey string, title string, bannedDirectories []string) (string, error) {
 	options := runtime.OpenDialogOptions{
 		Title:                title,
 		CanCreateDirectories: false,
@@ -93,8 +100,19 @@ func (a *App) chooseDirFromConfigAndUpdateConfig(configKey string, title string)
 	chosenPath, err := runtime.OpenDirectoryDialog(a.ctx, options)
 	if err != nil || chosenPath == "" {
 		runtime.LogErrorf(a.ctx, "Failed to choose directory: %w", err)
-		return ""
+		return "", nil
 	} else {
+
+		// Check if the chosen directory is in the banned list
+		for _, bannedDirectory := range bannedDirectories {
+			// expand it first
+			expandedBannedDirectory := os.ExpandEnv(bannedDirectory)
+			if lowerFileNamesEqual(chosenPath, expandedBannedDirectory) {
+				runtime.LogErrorf(a.ctx, "Chosen directory is in the banned list: %s", chosenPath)
+				return "", errBannedDirectory
+			}
+		}
+
 		runtime.LogDebugf(a.ctx, "Chosen new path %s for key '%s', updating config", chosenPath, configKey)
 		a.config.Set(configKey, chosenPath)
 		if err = a.config.WriteConfig(); err != nil {
@@ -109,7 +127,7 @@ func (a *App) chooseDirFromConfigAndUpdateConfig(configKey string, title string)
 		}
 	}
 
-	return chosenPath
+	return chosenPath, nil
 }
 
 // exported stuff from here on out
@@ -178,11 +196,31 @@ func (a *App) GetConfigJSON() ConfigJSON {
 }
 
 func (a *App) ChooseFiltersDir() string {
-	return a.chooseDirFromConfigAndUpdateConfig(configKeyFiltersDirectory, "Choose Path of Exile filter directory")
+	chosenPath, err := a.chooseDirFromConfigAndUpdateConfig(configKeyFiltersDirectory,
+		"Choose Path of Exile filter directory",
+		[]string{a.config.GetString(configKeyDownloadsDirectory)})
+	if err != nil && errors.Is(err, errBannedDirectory) {
+		runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
+			Type:    runtime.ErrorDialog,
+			Title:   "Directory conflict",
+			Message: "You cannot choose your current downloads directory to be your filter directory (or vice-versa)"})
+	}
+
+	return chosenPath
 }
 
 func (a *App) ChooseDownloadsDir() string {
-	return a.chooseDirFromConfigAndUpdateConfig(configKeyDownloadsDirectory, "Choose downloads directory to watch")
+	chosenPath, err := a.chooseDirFromConfigAndUpdateConfig(configKeyDownloadsDirectory,
+		"Choose downloads directory to watch",
+		[]string{a.config.GetString(configKeyFiltersDirectory)})
+	if err != nil && errors.Is(err, errBannedDirectory) {
+		runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
+			Type:    runtime.ErrorDialog,
+			Title:   "Directory conflict",
+			Message: "You cannot choose your current filter directory to be your downloads directory (or vice-versa)"})
+	}
+
+	return chosenPath
 }
 
 type FileListEntry struct {

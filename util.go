@@ -9,6 +9,7 @@ import (
 	"github.com/adrg/xdg"
 )
 
+// maybe use this to allows preferences reset.. idk
 func clearConfigDir() {
 	configPath, err := xdg.ConfigFile(configDirAndName)
 	if err != nil {
@@ -19,7 +20,7 @@ func clearConfigDir() {
 }
 
 func lowerFileNamesEqual(a, b string) bool {
-	return strings.ToLower(a) == strings.ToLower(b)
+	return strings.EqualFold(a, b)
 }
 
 func dirExists(path string) bool {

@@ -11,9 +11,16 @@ func onTrayReady(app *App) {
 	systray.SetIcon(icon.Data)
 	systray.SetTitle("filtersnatch")
 	systray.SetTooltip("filtersnatch")
-	menuItemShowWindow := systray.AddMenuItem("Options", "")
+	menuItemShowWindow := systray.AddMenuItem("Options", "Open configuration UI")
 	systray.AddSeparator()
-	menuItemQuit := systray.AddMenuItem("Quit", "")
+
+	if app.version != "" {
+		versionInfo := systray.AddMenuItem(app.version, "")
+		versionInfo.Disable()
+		systray.AddSeparator()
+	}
+
+	menuItemQuit := systray.AddMenuItem("Quit", "Quit filtersnatch")
 
 	go func() {
 		for {

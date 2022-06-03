@@ -67,12 +67,6 @@ const FileEntryAndModeSelector = (props: FileEntryAndModeSelectorProps) => {
   }, []);
 
   useEffect(() => {
-    if (!props.selectedEntryName) {
-      setSelectedEntryName("");
-    }
-  }, [props.entries]);
-
-  useEffect(() => {
     if (selectedMode.inputMode === "singleEntry") {
       setSelectedEntryName(newestEntry ? newestEntry.name : "");
     }

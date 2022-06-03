@@ -1,5 +1,7 @@
 package main
 
+import "github.com/pkg/errors"
+
 type OverwriteStrategy string
 
 const (
@@ -52,3 +54,5 @@ const (
 
 	configKeyWindowStartInTray = "window.start_in_tray"
 )
+
+var errBannedDirectory = errors.New("banned directory")

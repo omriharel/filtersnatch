@@ -1,11 +1,6 @@
-core functionality:
+# filtersnatch - to-do list
 
-- watch directories
-- respond to directory change and stop/start watcher
-- emit events on new file additions
-- respond to new filter file addition if matches current configuration and replace target
-
-UI (still core):
+UI (still kinda core):
 
 - allow pause/resume (also from tray)
 - show current status (pending dirs, pending modes, watching, paused)
@@ -14,18 +9,20 @@ UI (still core):
 deployment:
 
 - add build tags
+- add build & release packaging scripts
+- add github actions build workflow
 
 QA:
 
-- dont allow selecting same directory for both
-- md5 on source and dest files?
+- md5 matching on source and dest files?
 
 marketing:
 
 - github page
+- demo video?
 
 nice to have:
 
+- toggle: attempt to delete downloaded filter after successful overwrite
 - transparency toggle
 - actions taken log
-- toggle: attempt to delete downloaded filter after successful overwrite
