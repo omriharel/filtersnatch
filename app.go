@@ -17,8 +17,11 @@ import (
 
 // App struct
 type App struct {
-	ctx    context.Context
-	config *viper.Viper
+	Paused bool
+
+	ctx     context.Context
+	config  *viper.Viper
+	watcher *Watcher
 }
 
 // NewApp creates a new App application struct
@@ -34,7 +37,12 @@ func (a *App) startup(ctx context.Context) {
 	var err error
 	a.config, err = NewConfig(a.ctx)
 	if err != nil {
-		runtime.LogErrorf(a.ctx, "Failed to load config: %w", err)
+		runtime.LogErrorf(a.ctx, "Failed to init config: %w", err)
+	}
+
+	a.watcher, err = NewWatcher(a)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "Failed to init watcher: %w", err)
 	}
 
 	go func() {
@@ -44,9 +52,25 @@ func (a *App) startup(ctx context.Context) {
 
 // domReady is called when the DOM is ready
 func (a *App) domReady(ctx context.Context) {
+	a.watcher.Start()
+
 	if !a.config.GetBool(configKeyWindowStartInTray) {
 		runtime.WindowShow(ctx)
 	}
+
+	filtersDirectory := a.config.GetString(configKeyFiltersDirectory)
+	if filtersDirectory != "" && dirExists(filtersDirectory) {
+		a.watcher.SetFiltersDirectory(filtersDirectory)
+	}
+
+	downloadsDirectory := a.config.GetString(configKeyDownloadsDirectory)
+	if downloadsDirectory != "" && dirExists(downloadsDirectory) {
+		a.watcher.SetDownloadsDirectory(downloadsDirectory)
+	}
+}
+
+func (a *App) shutdown(ctx context.Context) {
+	a.watcher.Stop()
 }
 
 // chooseDirFromConfigAndUpdateConfig allows the user to choose a directory for a given purpose.
@@ -60,7 +84,7 @@ func (a *App) chooseDirFromConfigAndUpdateConfig(configKey string, title string)
 	}
 	defaultDirectory := a.config.GetString(configKey)
 	expandedDefaultDirectory := os.ExpandEnv(defaultDirectory)
-	runtime.LogDebugf(a.ctx, "Expanded %s into %s (key: %s)", defaultDirectory, expandedDefaultDirectory, configKey)
+	runtime.LogTracef(a.ctx, "Expanded %s into %s (key: %s)", defaultDirectory, expandedDefaultDirectory, configKey)
 
 	if dirExists(expandedDefaultDirectory) {
 		options.DefaultDirectory = expandedDefaultDirectory
@@ -75,6 +99,13 @@ func (a *App) chooseDirFromConfigAndUpdateConfig(configKey string, title string)
 		a.config.Set(configKey, chosenPath)
 		if err = a.config.WriteConfig(); err != nil {
 			runtime.LogErrorf(a.ctx, "Failed to update config key '%s': %w", configKey, err)
+		}
+
+		// update watcher
+		if configKey == configKeyFiltersDirectory {
+			a.watcher.SetFiltersDirectory(chosenPath)
+		} else if configKey == configKeyDownloadsDirectory {
+			a.watcher.SetDownloadsDirectory(chosenPath)
 		}
 	}
 
@@ -110,6 +141,16 @@ func (a *App) SetDownloadsStrategyAndUpdateConfig(strategy string, fileName stri
 	if err := a.config.WriteConfig(); err != nil {
 		runtime.LogErrorf(a.ctx, "Failed to update config: %w", err)
 	}
+}
+
+func (a *App) TogglePause() {
+	if !a.Paused {
+		runtime.LogInfo(a.ctx, "Pausing")
+	} else {
+		runtime.LogInfo(a.ctx, "Resuming")
+	}
+
+	a.Paused = !a.Paused
 }
 
 type ConfigJSON struct {
@@ -151,7 +192,7 @@ type FileListEntry struct {
 
 func (a *App) ListFiltersInDir(dir string) ([]FileListEntry, error) {
 	expandedDir := os.ExpandEnv(dir)
-	runtime.LogDebugf(a.ctx, "Expanded %s into %s", dir, expandedDir)
+	runtime.LogTracef(a.ctx, "Expanded %s into %s", dir, expandedDir)
 
 	if !dirExists(expandedDir) {
 		return nil, fmt.Errorf("directory %s does not exist", dir)

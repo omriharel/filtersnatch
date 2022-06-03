@@ -5,13 +5,14 @@ go 1.17
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/djherbis/times v1.5.0
+	github.com/fsnotify/fsnotify v1.5.4
 	github.com/getlantern/systray v1.2.1
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.12.0
 	github.com/wailsapp/wails/v2 v2.0.0-beta.37
 )
 
 require (
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/getlantern/context v0.0.0-20220418194847-3d5e7a086201 // indirect
 	github.com/getlantern/errors v1.0.1 // indirect
 	github.com/getlantern/golog v0.0.0-20211223150227-d4d95a44d873 // indirect
@@ -40,7 +41,6 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20210706143420-7d21f8c997e2 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

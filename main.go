@@ -23,10 +23,11 @@ func main() {
 	err := wails.Run(&options.App{
 		Title:             "filtersnatch",
 		Width:             1024,
-		Height:            872,
+		Height:            882,
 		Assets:            assets,
 		OnStartup:         app.startup,
 		OnDomReady:        app.domReady,
+		OnShutdown:        app.shutdown,
 		DisableResize:     true,
 		HideWindowOnClose: true,
 		StartHidden:       true,

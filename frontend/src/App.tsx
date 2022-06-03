@@ -41,15 +41,21 @@ const App = () => {
   const [configLoaded, setConfigLoaded] = useState(false);
 
   const refreshFiltersInFiltersDir = () => {
-    ListFiltersInDir(chosenFiltersDir).then((filters) => {
-      setFiltersInFiltersDir(filters as main.FileListEntry[]);
-    });
+    if (chosenFiltersDir) {
+      LogDebug("Refreshing filters dir contents");
+      ListFiltersInDir(chosenFiltersDir).then((filters) => {
+        setFiltersInFiltersDir(filters as main.FileListEntry[]);
+      });
+    }
   };
 
   const refreshFiltersInDownloadsDir = () => {
-    ListFiltersInDir(chosenDownloadsDir).then((filters) => {
-      setFiltersInDownloadsDir(filters as main.FileListEntry[]);
-    });
+    if (chosenDownloadsDir) {
+      LogDebug("Refreshing downloads dir contents");
+      ListFiltersInDir(chosenDownloadsDir).then((filters) => {
+        setFiltersInDownloadsDir(filters as main.FileListEntry[]);
+      });
+    }
   };
 
   useEffect(() => {
@@ -69,25 +75,30 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    EventsOn("watchEventTriggered", refreshFiltersInDownloadsDir);
-    EventsOn("filterFileReplaced", refreshFiltersInFiltersDir);
+    EventsOn("watch_event_triggered", () => {
+      refreshFiltersInDownloadsDir();
+      refreshFiltersInFiltersDir();
+    });
+    EventsOn("filter_file_replaced", () => {
+      refreshFiltersInFiltersDir();
+    });
     return () => {
-      EventsOff("watchEventTriggered");
-      EventsOff("filterFileReplaced");
+      EventsOff("watch_event_triggered");
+      EventsOff("filter_file_replaced");
     };
-  }, []);
+  }, [chosenFiltersDir, chosenDownloadsDir]);
 
   useEffect(() => {
-    if (chosenFiltersDir) {
+    if (configLoaded) {
       refreshFiltersInFiltersDir();
     }
-  }, [chosenFiltersDir]);
+  }, [chosenFiltersDir, configLoaded]);
 
   useEffect(() => {
-    if (chosenDownloadsDir) {
+    if (configLoaded) {
       refreshFiltersInDownloadsDir();
     }
-  }, [chosenDownloadsDir]);
+  }, [chosenDownloadsDir, configLoaded]);
 
   return (
     <div
@@ -169,6 +180,8 @@ const App = () => {
                         "selected_file",
                         entryName || ""
                       );
+
+                      setChosenFilterFile(entryName || "");
                     },
                     inputMode: "entries",
                   },
@@ -181,6 +194,10 @@ const App = () => {
                         "named_file",
                         text || ""
                       );
+
+                      if (text) {
+                        setChosenFilterFile(text);
+                      }
                     },
                     inputMode: "text",
                     textInputPrompt: "(Over)write only this filter file:",
@@ -224,6 +241,10 @@ const App = () => {
                     ),
                     inputMode: "singleEntry",
                     onChosen: ({ entryName }) => {
+                      if (!entryName) {
+                        return;
+                      }
+
                       LogDebug(
                         "Selected to take newest filter file: " + entryName
                       );
@@ -244,6 +265,10 @@ const App = () => {
                         "named_file",
                         text || ""
                       );
+
+                      if (text) {
+                        setChosenDownloadsWatchedFile(text);
+                      }
                     },
                   },
                 ]}
