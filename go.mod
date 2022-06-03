@@ -1,4 +1,4 @@
-module github.com/omriharel/instantblade
+module github.com/omriharel/filtersnatch
 
 go 1.17
 

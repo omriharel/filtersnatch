@@ -182,6 +182,6 @@ func (a *App) ListFiltersInDir(dir string) ([]FileListEntry, error) {
 		}
 	}
 
-	runtime.LogDebugf(a.ctx, "Found %d filter files in %s", len(filterFiles), dir)
+	runtime.LogDebugf(a.ctx, "Found %d filter files in %s", len(filterFiles), expandedDir)
 	return filterFiles, nil
 }

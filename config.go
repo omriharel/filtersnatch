@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/adrg/xdg"
@@ -9,7 +10,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const configDirAndName = "instantblade/config.yaml"
+const configDirAndName = "filtersnatch/config.yaml"
 
 func NewConfig(ctx context.Context) (*viper.Viper, error) {
 	configPath, err := xdg.ConfigFile(configDirAndName)
@@ -22,11 +23,11 @@ func NewConfig(ctx context.Context) (*viper.Viper, error) {
 	config.AddConfigPath(filepath.Dir(configPath))
 	config.SetConfigType("yaml")
 
-	config.SetDefault(configKeyFiltersDirectory, defaultLootFilterDirectory)
+	config.SetDefault(configKeyFiltersDirectory, os.ExpandEnv(defaultLootFilterDirectory))
 	config.SetDefault(configKeyFiltersOverwriteStrategy, OverwriteSelectedFile)
 	config.SetDefault(configKeyFiltersSelectedFile, nil)
 
-	config.SetDefault(configKeyDownloadsDirectory, xdg.UserDirs.Download)
+	config.SetDefault(configKeyDownloadsDirectory, os.ExpandEnv(xdg.UserDirs.Download))
 	config.SetDefault(configKeyDownloadsWatchStrategy, WatchNewestFilterFile)
 	config.SetDefault(configKeyDownloadsNamedFile, nil)
 

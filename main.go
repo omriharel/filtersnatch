@@ -21,7 +21,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:             "instantblade",
+		Title:             "filtersnatch",
 		Width:             1024,
 		Height:            872,
 		Assets:            assets,

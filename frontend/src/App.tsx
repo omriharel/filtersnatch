@@ -98,8 +98,8 @@ const App = () => {
         <div className="flex h-20 gap-5">
           <div className="flex flex-col justify-start">
             <div className="text-6xl text-slate-300 italic">
-              <span className="text-gray-400">instant</span>
-              blade
+              <span className="text-gray-400">filter</span>
+              snatch
             </div>
             <div className="text-lg italic text-slate-300">
               filter file watcher & replacer

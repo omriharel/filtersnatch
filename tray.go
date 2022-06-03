@@ -4,13 +4,13 @@ import (
 	"github.com/getlantern/systray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"github.com/omriharel/instantblade/icon"
+	"github.com/omriharel/filtersnatch/icon"
 )
 
 func onTrayReady(app *App) {
 	systray.SetIcon(icon.Data)
-	systray.SetTitle("instantblade")
-	systray.SetTooltip("instantblade")
+	systray.SetTitle("filtersnatch")
+	systray.SetTooltip("filtersnatch")
 	menuItemShowWindow := systray.AddMenuItem("Options", "")
 	systray.AddSeparator()
 	menuItemQuit := systray.AddMenuItem("Quit", "")
