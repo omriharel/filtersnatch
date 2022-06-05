@@ -6,7 +6,7 @@ filtersnatch is an open-source **offline item filter watching & replacement tool
 
 [![Discord](https://img.shields.io/discord/982370320541437952?logo=discord)](https://discord.gg/MCFFXbUTzR)
 
-**[Download latest release](https://github.com/omriharel/filtersnatch/releases)**
+**[Download latest release](https://github.com/omriharel/filtersnatch/releases)** | **[Demo video](https://youtu.be/d0LYSMoFuYg)**
 
 ![Screenshot](./assets/screenshot.png)
 

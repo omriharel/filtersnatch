@@ -12,7 +12,7 @@ import (
 
 const (
 	internalEmitCooldown      = time.Millisecond * 500
-	internalFlushWaitDuration = time.Millisecond * 200
+	internalFlushWaitDuration = time.Millisecond * 300
 
 	downloadTimeout = time.Second * 2
 )
